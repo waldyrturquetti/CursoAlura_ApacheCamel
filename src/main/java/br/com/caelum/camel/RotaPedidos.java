@@ -1,6 +1,7 @@
 package br.com.caelum.camel;
 
 import org.apache.camel.CamelContext;
+import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.DefaultCamelContext;
 
@@ -15,10 +16,17 @@ public class RotaPedidos {
 			public void configure() throws Exception {
 
 				from("file:pedidos?delay=5s&noop=true")
+						.split()
+							.xpath("/pedido/itens/item")
+						.log("${id} - ${body}")
+						.filter()
+							.xpath("/item/formato[text()='EBOOK']")
 						.log("${id} - ${body}")
 						.marshal().xmljson()
-						.log("${body}")
-						.setHeader("CamelFileName", simple("${file:name.noext}.json"))
+						.log("${id} - ${body}")
+//						.setHeader("CamelFileName", simple("${file:name.noext}.json"))
+//						.setHeader("CamelFileName", simple("${id}.json"))
+						.setHeader(Exchange.FILE_NAME, simple("${file:name.noext}-${header.CamelSplitIndex}.json"))
 						.to("file:saida");
 			}
 		});
