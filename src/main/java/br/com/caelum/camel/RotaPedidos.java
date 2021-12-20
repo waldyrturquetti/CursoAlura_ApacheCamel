@@ -24,8 +24,6 @@ public class RotaPedidos {
 						.log("${id} - ${body}")
 						.marshal().xmljson()
 						.log("${id} - ${body}")
-//						.setHeader("CamelFileName", simple("${file:name.noext}.json"))
-//						.setHeader("CamelFileName", simple("${id}.json"))
 						.setHeader(Exchange.FILE_NAME, simple("${file:name.noext}-${header.CamelSplitIndex}.json"))
 						.to("file:saida");
 			}
