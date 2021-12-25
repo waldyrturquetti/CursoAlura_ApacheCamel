@@ -1,4 +1,4 @@
-package br.com.caelum.camel.desafios;
+package br.com.caelum.camel.desafios.capitulo3;
 
 import br.com.caelum.camel.pojos.Negociacao;
 import com.thoughtworks.xstream.XStream;
