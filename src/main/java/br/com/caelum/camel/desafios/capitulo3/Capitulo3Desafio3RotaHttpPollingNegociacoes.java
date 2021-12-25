@@ -1,4 +1,4 @@
-package br.com.caelum.camel.desafios;
+package br.com.caelum.camel.desafios.capitulo3;
 
 import br.com.caelum.camel.pojos.Negociacao;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
@@ -44,10 +44,10 @@ public class Capitulo3Desafio3RotaHttpPollingNegociacoes {
                                 exchange.setProperty("data", data);
                             }
                         })
-                        .setBody(simple("insert into negociacao(preco, quantidade, data) values (${property.preco}, ${property.quantidade}, '${property.data}')")).
-                        log("${body}"). //logando o comando esql
-                        delay(1000). //esperando 1s para deixar a execução mais fácil de entender
-                        to("jdbc:mysql");
+                        .setBody(simple("insert into negociacao(preco, quantidade, data) values (${property.preco}, ${property.quantidade}, '${property.data}')"))
+                        .log("${body}") //logando o comando esql
+                        .delay(1000) //esperando 1s para deixar a execução mais fácil de entender
+                        .to("jdbc:mysql");
             }
         });
 
