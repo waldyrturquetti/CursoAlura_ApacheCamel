@@ -18,8 +18,10 @@ public class RotaPedidos {
 			@Override
 			public void configure() throws Exception {
 
+				//deve ser configurado antes de qualquer rota
 				errorHandler(
-						deadLetterChannel("file:erro")
+						deadLetterChannel("file:erro") //mensagem venenosa será gravada na pasta erro
+						.useOriginalMessage() //Mantém a mensagem original
 						.logExhaustedMessageHistory(true)
 						.maximumRedeliveries(3)
 						.redeliveryDelay(2000)
@@ -36,7 +38,8 @@ public class RotaPedidos {
 
 				from("file:pedidos?delay=5s&noop=true")
 						.routeId("rota-pedidos")
-						.to("validator:pedido.xsd");
+						.to("validator:pedido.xsd") //Validação
+				.log("Processing file ${file:name}");
 //
 //						.multicast()
 //					.to("direct:http")
