@@ -2,6 +2,7 @@ package br.com.caelum.camel;
 
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
+import org.apache.camel.Processor;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.http4.HttpMethods;
@@ -17,11 +18,29 @@ public class RotaPedidos {
 			@Override
 			public void configure() throws Exception {
 
+				errorHandler(
+						deadLetterChannel("file:erro")
+						.logExhaustedMessageHistory(true)
+						.maximumRedeliveries(3)
+						.redeliveryDelay(2000)
+								.onRedelivery(new Processor() {
+									@Override
+									public void process(Exchange exchange) throws Exception {
+										int counter = (int) exchange.getIn().getHeader(Exchange.REDELIVERY_COUNTER);
+										int max = (int) exchange.getIn().getHeader(Exchange.REDELIVERY_MAX_COUNTER);
+										System.out.println("Redelivery " + counter + "/" + max);
+									}
+								})
+				);
+
+
 				from("file:pedidos?delay=5s&noop=true")
 						.routeId("rota-pedidos")
-						.multicast()
-					.to("direct:http")
-					.to("direct:soap");
+						.to("validator:pedido.xsd");
+//
+//						.multicast()
+//					.to("direct:http")
+//					.to("direct:soap");
 
 				from("direct:http")
 					.routeId("rota-http")
@@ -42,19 +61,10 @@ public class RotaPedidos {
 						.log("Resultado do Template: ${body}")
 						.setHeader(Exchange.CONTENT_TYPE, constant("text/xml"))
 					.to("http4://localhost:8080/webservices/financeiro");
-
-				from("direct:velocity")
-						.setHeader("data", constant("8/12/2015"))
-						.to("velocity:template.vm")
-								.log("${body}");
 			}
 		});
 
 		context.start();
-
-		ProducerTemplate producer = context.createProducerTemplate();
-		producer.sendBody("direct:velocity", "Apache Camel rocks!!!");
-
 		Thread.sleep(2000);
 		context.stop();
 	}	
