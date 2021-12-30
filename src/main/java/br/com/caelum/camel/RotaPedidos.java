@@ -1,5 +1,6 @@
 package br.com.caelum.camel;
 
+import org.apache.activemq.camel.component.ActiveMQComponent;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
@@ -13,6 +14,7 @@ public class RotaPedidos {
 	public static void main(String[] args) throws Exception {
 
 		CamelContext context = new DefaultCamelContext();
+		context.addComponent("activemq", ActiveMQComponent.activeMQComponent("tcp://localhost:61616"));
 		context.addRoutes(new RouteBuilder() {
 
 			@Override
@@ -20,7 +22,8 @@ public class RotaPedidos {
 
 				//deve ser configurado antes de qualquer rota
 				errorHandler(
-						deadLetterChannel("file:erro") //mensagem venenosa será gravada na pasta erro
+						deadLetterChannel("activemq:queue:pedidos.DLQ") //mensagem venenosa será gravada na pasta erro
+																				  //DLQ (Dead Letter Queue)
 						.useOriginalMessage() //Mantém a mensagem original
 						.logExhaustedMessageHistory(true)
 						.maximumRedeliveries(3)
@@ -36,14 +39,13 @@ public class RotaPedidos {
 				);
 
 
-				from("file:pedidos?delay=5s&noop=true")
+				from("activemq:queue:pedidos")
 						.routeId("rota-pedidos")
 						.to("validator:pedido.xsd") //Validação
-				.log("Processing file ${file:name}");
-//
-//						.multicast()
-//					.to("direct:http")
-//					.to("direct:soap");
+						.log("Processing file ${file:name}")
+						.multicast()
+							.to("direct:http")
+							.to("direct:soap");
 
 				from("direct:http")
 					.routeId("rota-http")
